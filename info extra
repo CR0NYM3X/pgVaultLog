@@ -1,0 +1,148 @@
+🧠 Nombre del Proyecto
+pgVaultLog: Sistema Seguro de Gestión y Transferencia de Logs PostgreSQL
+
+---
+
+🎯 Objetivo General
+Desarrollar un sistema automatizado en Python que:
+- Comprime los logs diarios de PostgreSQL.
+- Los transfiere de forma segura a un servidor remoto (FTP/SCP).
+- Estructura los archivos para fácil acceso y trazabilidad.
+- Registra huellas digitales (MD5) y metadatos en una base de datos.
+- Garantiza la integridad y confidencialidad mediante cifrado.
+
+---
+
+🛠️ Componentes del Proyecto
+
+1. Compresión de Logs
+- Uso de gzip o tar.gz para reducir tamaño.
+- Compresión diaria basada en fecha (log_YYYYMMDD.tar.gz).
+- Validación de tamaño antes/después para asegurar compresión efectiva.
+
+2. Transferencia Segura
+- Opción de transferencia por:
+  - SCP (más seguro, cifrado por SSH).
+  - FTP/SFTP (según infraestructura disponible).
+- Validación de éxito de transferencia.
+- Reintentos automáticos en caso de fallo.
+- en caso de fallo de desconexión resguardar logs
+
+3. Estructura de Archivos en el Servidor
+- Carpeta por año/mes/día: logs/YYYY/MM/DD/
+- Nombres consistentes: postgresqllog<IP>_<timestamp>.gz
+- Archivos cifrados con AES-256 antes de la transferencia.
+
+4. Registro de Metadatos
+- Tabla en PostgreSQL para guardar:
+  - Nombre del archivo.
+  - Fecha y hora de compresión.
+  - IP del servidor origen.
+  - Hash MD5 del archivo comprimido.
+  - Estado de transferencia.
+  - Usuario que ejecutó el script.
+
+5. Cifrado del Compresor
+- El script de compresión puede estar cifrado o protegido con firma digital.
+- Uso de cryptography o pyAesCrypt para cifrar los logs antes de enviarlos.
+
+---
+
+🚀 Extras para Impulsar el Proyecto
+
+🔐 Seguridad Avanzada
+- Firma digital de los logs con clave privada.
+- Validación de integridad con SHA-256 además de MD5.
+- Registro de intentos fallidos de transferencia.
+
+📊 Dashboard Web (opcional)
+- Api- Flask + Bootstrap para visualizar:
+  - Logs transferidos.
+  - Estado de cada archivo.
+  - Alertas de fallos.
+  - Estadísticas de tamaño y frecuencia.
+
+📦 Integración con herramientas externas
+- Integración con Grafana o Prometheus para monitoreo.
+- Alertas por correo o Telegram si falla la transferencia.
+- registro de log de manera local
+
+
+🧪 Testing y Validación
+- Pruebas unitarias con pytest.
+- Validación de integridad post-transferencia.
+- Simulación de auditorías para verificar trazabilidad.
+
+📄 Documentación Profesional
+- README con instrucciones claras.
+- Diagrama de flujo del proceso.
+- Ejemplos de uso y configuración.
+- Manual de auditoría para terceros.
+
+
+🗄️ Servidor de Almacenamiento y Validación
+
+- El servidor destino contará con una instancia de PostgreSQL para almacenar:
+  - Historial completo de transferencias.
+  - Metadatos de cada archivo (nombre, fecha, IP origen, tamaño, estado).
+  - Hash MD5 generado en el servidor origen y el hash calculado en destino para validación de integridad.
+  - Contraseña cifrada asociada a cada archivo (usando AES o bcrypt).
+- Una API REST permitirá consultar los registros, validar integridad, y acceder a metadatos de forma segura.
+- Al recibir un archivo, el sistema:
+  - Calcula el MD5 local.
+  - Compara con el MD5 recibido.
+  - Actualiza el estado en la base de datos (válido/no válido).
+  - Registra la operación con timestamp y usuario.
+- La API incluirá autenticación y roles para limitar acceso a información sensible.
+
+
+
+🔐 Seguridad y Control de Acceso
+- Autenticación basada en tokens JWT para la API.
+- Roles y permisos: administrador, auditor, operador.
+- Registro de auditoría para cada consulta o modificación en la base de datos.
+
+---
+
+📦 Gestión Inteligente de Archivos
+- Versionado de logs si se transfieren múltiples veces.
+- Retención configurable: eliminar automáticamente logs antiguos según políticas.
+- Compresión incremental si los logs son muy grandes.
+
+---
+
+📊 Monitoreo y Alertas
+- Integración con Prometheus + Grafana para métricas del sistema.
+- Alertas por correo, Telegram o Slack si:
+  - Falla una transferencia.
+  - Hay discrepancia en los hashes.
+  - Se detecta actividad sospechosa en la API.
+
+---
+
+🧠 Inteligencia y Automatización
+- Machine Learning básico para detectar patrones anómalos en los logs.
+- Autoescalado si el volumen de logs crece (usando contenedores con Docker/Kubernetes).
+- Integración con SIEMs como Splunk o Graylog para análisis avanzado.
+
+---
+
+🧪 Validación y Pruebas
+- Pruebas unitarias y de integración con pytest.
+- Simulador de auditoría: genera escenarios de validación para probar trazabilidad.
+- Validación cruzada de logs con otros sistemas (por ejemplo, firewall o sistema operativo).
+
+---
+
+
+ En este tipo de arquitectura, el origen (servidor PostgreSQL que genera los logs) debe actuar como un nodo efímero: genera, comprime, transfiere y elimina. Esto reduce riesgos de almacenamiento innecesario, exposición prolongada y duplicidad.
+
+La política de retención debe aplicarse en el servidor destino, que es el repositorio central y seguro. Ahí sí tiene sentido definir:
+
+- Cuánto tiempo conservar los logs (por ejemplo, 1 año, 5 años).
+- Qué tipo de logs se archivan a largo plazo (solo los que pasaron validación).
+- Cuándo eliminar o mover a almacenamiento frío (S3, Glacier, etc.).
+- Cómo auditar los accesos y modificaciones.
+
+Además, podrías agregar una marca de tiempo de eliminación programada en la base de datos destino, para que el sistema sepa cuándo purgar cada archivo según su categoría o criticidad.
+
