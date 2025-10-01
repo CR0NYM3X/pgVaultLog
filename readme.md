@@ -1,4 +1,5 @@
- 
+# En Desarrollo 
+
 ## 📘 Descripción del Proyecto: pgVaultLog
 
 **pgVaultLog** es un sistema seguro, automatizado y extensible desarrollado en Python para la gestión, compresión, transferencia y auditoría de logs generados por servidores PostgreSQL. Su propósito principal es garantizar la **confidencialidad, integridad, trazabilidad y disponibilidad** de los archivos de log en entornos críticos, cumpliendo con buenas prácticas de seguridad y auditoría.
